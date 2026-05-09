@@ -118,7 +118,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ---------------- LOAD DATA ----------------
-df = pd.read_excel("../data/BlinkIT Grocery Data.xlsx")
+df = pd.read_excel("BlinkIT Grocery Data.xlsx")
 
 # ---------------- LOAD MODEL ----------------
 model = pickle.load(
