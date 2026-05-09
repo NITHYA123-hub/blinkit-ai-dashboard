@@ -524,7 +524,7 @@ elif page == "ML Prediction":
 
         value = cols[i % 3].number_input(
             f"Enter {col}",
-            value=float(df[col].mean()) if df[col].dtype != 'object' else 0
+             value = float(df[col].mean()) if pd.api.types.is_numeric_dtype(df[col]) else 0
         )
 
         input_data.append(value)
