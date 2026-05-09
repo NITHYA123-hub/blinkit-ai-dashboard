@@ -118,7 +118,19 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ---------------- LOAD DATA ----------------
-df = pd.read_excel("BlinkIT Grocery Data.xlsx")
+# df = pd.read_excel("BlinkIT Grocery Data.xlsx")
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DATA_PATH = os.path.join(
+    BASE_DIR,
+    "..",
+    "data",
+    "BlinkIT Grocery Data.csv"
+)
+
+df = pd.read_csv(DATA_PATH)
 
 # ---------------- LOAD MODEL ----------------
 model = pickle.load(
