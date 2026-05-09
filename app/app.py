@@ -133,9 +133,9 @@ DATA_PATH = os.path.join(
 df = pd.read_csv(DATA_PATH)
 
 # ---------------- LOAD MODEL ----------------
-model = pickle.load(
-    open("../models/sales_prediction_model.pkl", "rb")
-)
+import os
+model_path = os.path.join("models", "sales_prediction_model.pkl")
+model = pickle.load(open(model_path, "rb"))
 
 # ---------------- COLUMN NAMES ----------------
 item_col = 'Item Type'
