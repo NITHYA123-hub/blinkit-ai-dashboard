@@ -132,7 +132,6 @@ DATA_PATH = os.path.join(
 
 df = pd.read_csv(DATA_PATH)
 
-# ---------------- LOAD MODEL ----------------
 # ---------------- CREATE DATE COLUMN ----------------
 df['Date'] = pd.date_range(
     start='2025-01-01',
@@ -157,7 +156,7 @@ try:
     with open(MODEL_PATH, "rb") as f:
         model = pickle.load(f)
 
-    # st.success("✅ ML Model Loaded Successfully")
+     st.success("✅ ML Model Loaded Successfully")
 
 except FileNotFoundError:
     st.error(f"❌ Model file not found:\n{MODEL_PATH}")
@@ -654,31 +653,33 @@ elif page == "ML Prediction":
     # ---------- PREDICTION ----------
     if st.button("🚀 Predict Sales"):
 
-        try:
+    try:
 
-            input_data = [
-                item_weight,
-                item_visibility,
-                item_mrp,
-                outlet_age,
-                item_fat_encoded,
-                item_type_encoded,
-                outlet_size_encoded,
-                outlet_location_encoded,
-                outlet_type_encoded,
-                item_identifier_encoded,
-                outlet_identifier_encoded
-            ]
+        input_data = [
+            item_weight,
+            item_visibility,
+            item_mrp,
+            outlet_age,
+            item_fat_encoded,
+            item_type_encoded,
+            outlet_size_encoded,
+            outlet_location_encoded,
+            outlet_type_encoded
+        ]
 
-            prediction = model.predict([input_data])
+        st.write("Input Features:", len(input_data))
+        st.write(input_data)
 
-            st.success(
-                f"🛒 Predicted Sales: ₹ {prediction[0]:,.2f}"
-            )
+        prediction = model.predict([input_data])
 
-        except Exception as e:
+        st.success(
+            f"🛒 Predicted Sales: ₹ {prediction[0]:,.2f}"
+        )
 
-            st.error(f"❌ Error: {e}")
+    except Exception as e:
+
+        st.error(f"❌ Error: {e}")
+
 
 # ---------------- DATASET PAGE ----------------
 elif page == "Dataset":
