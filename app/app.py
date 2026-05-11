@@ -118,7 +118,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ---------------- LOAD DATA ----------------
-# df = pd.read_excel("BlinkIT Grocery Data.xlsx")
+## df = pd.read_csv(".../data/BlinkIT Grocery Data.csv")
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -155,9 +155,7 @@ MODEL_PATH = os.path.join(
 try:
     with open(MODEL_PATH, "rb") as f:
         model = pickle.load(f)
-
-     # st.success("✅ ML Model Loaded Successfully")
-
+        # st.success("✅ ML Model Loaded Successfully")
 except FileNotFoundError:
     st.error(f"❌ Model file not found:\n{MODEL_PATH}")
     st.stop()
@@ -329,6 +327,14 @@ selected_items = st.sidebar.multiselect(
 
 filtered_df = df[df[item_col].isin(selected_items)]
 
+# ---------------- WEEKLY SALES ----------------
+weekly_sales = (
+    filtered_df
+    .resample('W', on='Date')[sales_col]
+    .sum()
+    .reset_index()
+)
+
 # ---------------- KPI SECTION ----------------
 total_sales = filtered_df[sales_col].sum()
 avg_sales = filtered_df[sales_col].mean()
@@ -342,14 +348,6 @@ best_category = (
 )
 
 profit = total_sales * 0.18
-
-# ---------------- WEEKLY SALES ----------------
-weekly_sales = (
-    filtered_df
-    .resample('W', on='Date')[sales_col]
-    .sum()
-    .reset_index()
-)
 
 # ---------------- DASHBOARD PAGE ----------------
 if page == "Dashboard":
@@ -445,7 +443,7 @@ if page == "Dashboard":
 
     st.plotly_chart(fig3, use_container_width=True)
 
-# ---------------- WEEKLY REVENUE ----------------
+    # ---------------- WEEKLY REVENUE ----------------
     st.subheader("📅 Weekly Revenue Trend")
     fig_weekly = px.line(
     weekly_sales,
@@ -462,10 +460,9 @@ if page == "Dashboard":
     predicted_next_week = last_week_sales * 1.10
     st.success(f"🔮 Predicted Next Week Revenue: ₹ {predicted_next_week:,.0f}"
                )
-
-# ---------------- ANALYTICS PAGE ----------------
+    
+    # ---------------- ANALYTICS PAGE ----------------
 elif page == "Analytics":
-
     col3, col4 = st.columns(2)
 
     # SCATTER PLOT
@@ -556,6 +553,7 @@ elif page == "Analytics":
     st.plotly_chart(fig_gauge, use_container_width=True)
 
 # ---------------- ML PREDICTION PAGE ----------------
+
 elif page == "ML Prediction":
 
     st.subheader("🔮 Predict Grocery Sales")
@@ -653,33 +651,31 @@ elif page == "ML Prediction":
     # ---------- PREDICTION ----------
     if st.button("🚀 Predict Sales"):
 
-    try:
+        try:
 
-        input_data = [
-            item_weight,
-            item_visibility,
-            item_mrp,
-            outlet_age,
-            item_fat_encoded,
-            item_type_encoded,
-            outlet_size_encoded,
-            outlet_location_encoded,
-            outlet_type_encoded
-        ]
+            input_data = [
+                item_weight,
+                item_visibility,
+                item_mrp,
+                outlet_age,
+                item_fat_encoded,
+                item_type_encoded,
+                outlet_size_encoded,
+                outlet_location_encoded,
+                outlet_type_encoded,
+                item_identifier_encoded,
+                outlet_identifier_encoded
+            ]
 
-        st.write("Input Features:", len(input_data))
-        st.write(input_data)
+            prediction = model.predict([input_data])
 
-        prediction = model.predict([input_data])
+            st.success(
+                f"🛒 Predicted Sales: ₹ {prediction[0]:,.2f}"
+            )
 
-        st.success(
-            f"🛒 Predicted Sales: ₹ {prediction[0]:,.2f}"
-        )
+        except Exception as e:
 
-    except Exception as e:
-
-        st.error(f"❌ Error: {e}")
-
+            st.error(f"❌ Error: {e}")
 
 # ---------------- DATASET PAGE ----------------
 elif page == "Dataset":
