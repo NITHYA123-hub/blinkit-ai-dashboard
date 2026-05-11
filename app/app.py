@@ -13,13 +13,21 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---------------- LOGIN SYSTEM ----------------
-USERNAME = "admin"
-PASSWORD = "blinkit123"
+# ---------------- LOGIN DETAILS ----------------
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "blinkit123"
 
-if 'logged_in' not in st.session_state:
+GUEST_USERNAME = "guest"
+GUEST_PASSWORD = "guest123"
+
+# ---------------- SESSION STATE ----------------
+if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
+if "role" not in st.session_state:
+    st.session_state.role = ""
+
+# ---------------- LOGIN PAGE ----------------
 if not st.session_state.logged_in:
 
     st.markdown("""
@@ -65,57 +73,49 @@ if not st.session_state.logged_in:
             width=120
         )
 
-        username = st.text_input("👤 Username")
-        password = st.text_input("🔒 Password", type="password")
+        st.subheader("🔐 Login")
 
-        remember = st.checkbox("Remember Me")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
 
-        col_a, col_b = st.columns(2)
+        if st.button("Login"):
 
-        with col_a:
-            login_btn = st.button("🚀 Login", use_container_width=True)
+            # Admin Login
+            if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
 
-        with col_b:
-            guest_btn = st.button("👀 Guest Demo", use_container_width=True)
-
-        if login_btn:
-
-            if username == USERNAME and password == PASSWORD:
                 st.session_state.logged_in = True
-                st.success("✅ Login Successful")
-                st.balloons()
+                st.session_state.role = "Admin"
+
+                st.success("✅ Admin Login Successful")
+
+                st.rerun()
+
+            # Guest Login
+            elif username == GUEST_USERNAME and password == GUEST_PASSWORD:
+
+                st.session_state.logged_in = True
+                st.session_state.role = "Guest"
+
+                st.success("✅ Guest Login Successful")
+
                 st.rerun()
 
             else:
+
                 st.error("❌ Invalid Username or Password")
 
-        if guest_btn:
-            st.info("Demo Credentials → demo_user / guest123")
-
-        st.markdown("---")
-
-        st.markdown(
-            """
-            <center>
-            <h4 style='color:#F7C600;'>✨ Features Included</h4>
-            </center>
-            """,
-            unsafe_allow_html=True
-        )
-
-        f1, f2 = st.columns(2)
-
-        with f1:
-            st.success("📊 Interactive Analytics")
-            st.success("🤖 AI Sales Prediction")
-            st.success("📈 Advanced Charts")
-
-        with f2:
-            st.success("🔥 Real-Time Insights")
-            st.success("📂 Download Reports")
-            st.success("🎨 Blinkit Theme UI")
-
     st.stop()
+
+# ---------------- ROLE-BASED MENU ----------------
+allowed_pages = {
+    "Admin": ["Dashboard", "Analytics", "ML Prediction", "Dataset", "About"],
+    "Guest": ["Dashboard", "Analytics", "About"]
+}
+
+page = st.sidebar.radio(
+    "Navigation",
+    allowed_pages[st.session_state.role]
+)
 
 # ---------------- LOAD DATA ----------------
 ## df = pd.read_csv(".../data/BlinkIT Grocery Data.csv")
@@ -306,18 +306,6 @@ st.markdown(
 
 st.markdown("---")
 
-# ---------------- SIDEBAR ----------------
-st.sidebar.title("📌 Dashboard Filters")
-
-page = st.sidebar.radio(
-    "Navigation",
-    [
-        "Dashboard",
-        "Analytics",
-        "ML Prediction",
-        "Dataset"
-    ]
-)
 
 selected_items = st.sidebar.multiselect(
     "Select Item Types",
@@ -556,6 +544,10 @@ elif page == "Analytics":
 
 elif page == "ML Prediction":
 
+    if st.session_state.role != "Admin":
+        st.warning("⚠ This section is only accessible for Admin users.")
+        st.stop()
+
     st.subheader("🔮 Predict Grocery Sales")
 
     st.write("Enter product details below.")
@@ -680,6 +672,10 @@ elif page == "ML Prediction":
 # ---------------- DATASET PAGE ----------------
 elif page == "Dataset":
 
+    if st.session_state.role != "Admin":
+        st.warning("⚠ Dataset access is restricted to Admin only.")
+        st.stop()
+
     st.subheader("📂 Dataset Preview")
 
     st.dataframe(filtered_df)
@@ -693,25 +689,56 @@ elif page == "Dataset":
         mime='text/csv'
     )
 
-# ---------------- CONCLUSION ----------------
-st.markdown("---")
+# ---------- ABOUT ----------
+elif page == "About":
 
-st.subheader("📌 Conclusion")
+    st.title("About Project")
 
-st.write(
-    "This dashboard helps analyze grocery sales trends, customer behavior, outlet performance, and predicts future sales using Machine Learning."
-)
+    st.markdown("""
+    ### 🛒 Blinkit AI Dashboard
 
-# ---------------- FOOTER ----------------
-st.markdown("---")
+    This project is an AI-powered grocery sales intelligence system built using Machine Learning and Streamlit.  
+    It helps analyze sales trends, visualize business insights, and predict future sales.
 
-st.markdown(
-    """
-    <center>
-    <h4 style='color:gray;'>
-    Developed using Streamlit • Plotly • Machine Learning
-    </h4>
-    </center>
-    """,
-    unsafe_allow_html=True
-)
+    ---
+
+    ### 🚀 Technologies Used
+    - Python
+    - Streamlit
+    - Pandas
+    - NumPy
+    - Scikit-learn
+    - Plotly
+    - Matplotlib
+
+    ---
+
+    ### 🤖 Machine Learning
+    - Random Forest Regressor
+    - Feature Engineering on grocery dataset
+    - Sales Prediction based on product & outlet attributes
+
+    ---
+
+    ### 📌 Features
+    - 📊 Interactive Sales Dashboard
+    - 🔮 AI Sales Prediction
+    - 📈 Data Visualization (Bar, Line, Pie, Heatmaps)
+    - 🏪 Outlet Performance Analysis
+    - 📂 Dataset Exploration & Download
+    - 🔐 Login Authentication System
+
+    ---
+
+    ### 👨‍💻 Project Goal
+    To analyze grocery retail data and build an intelligent system that supports data-driven business decisions using AI.
+    """)
+
+
+# ---------------- LOGOUT ----------------
+st.sidebar.markdown("---")
+
+if st.sidebar.button("🚪 Logout"):
+    st.session_state.logged_in = False
+    st.success("✅ Logged Out Successfully")
+    st.rerun()
