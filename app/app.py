@@ -133,9 +133,35 @@ DATA_PATH = os.path.join(
 df = pd.read_csv(DATA_PATH)
 
 # ---------------- LOAD MODEL ----------------
+# ---------------- CREATE DATE COLUMN ----------------
+df['Date'] = pd.date_range(
+    start='2025-01-01',
+    periods=len(df),
+    freq='D'
+)
+
+df['Date'] = pd.to_datetime(df['Date'])
+
+# ---------------- LOAD MODEL ----------------
 import os
-model_path = os.path.join("models", "sales_prediction_model.pkl")
-model = pickle.load(open(model_path, "rb"))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+MODEL_PATH = os.path.join(
+    BASE_DIR,
+    "..",
+    "models",
+    "sales_prediction_model.pkl"
+)
+
+try:
+    with open(MODEL_PATH, "rb") as f:
+        model = pickle.load(f)
+
+    # st.success("✅ ML Model Loaded Successfully")
+
+except FileNotFoundError:
+    st.error(f"❌ Model file not found:\n{MODEL_PATH}")
+    st.stop()
 
 # ---------------- COLUMN NAMES ----------------
 item_col = 'Item Type'
@@ -318,6 +344,14 @@ best_category = (
 
 profit = total_sales * 0.18
 
+# ---------------- WEEKLY SALES ----------------
+weekly_sales = (
+    filtered_df
+    .resample('W', on='Date')[sales_col]
+    .sum()
+    .reset_index()
+)
+
 # ---------------- DASHBOARD PAGE ----------------
 if page == "Dashboard":
 
@@ -411,6 +445,24 @@ if page == "Dashboard":
     )
 
     st.plotly_chart(fig3, use_container_width=True)
+
+# ---------------- WEEKLY REVENUE ----------------
+    st.subheader("📅 Weekly Revenue Trend")
+    fig_weekly = px.line(
+    weekly_sales,
+    x='Date',
+    y='Sales',
+    markers=True,
+    template='plotly_dark',
+    title='Weekly Revenue Analysis'
+)
+    st.plotly_chart(fig_weekly, use_container_width=True)
+    
+    # ---------------- NEXT WEEK PREDICTION ----------------
+    last_week_sales = weekly_sales['Sales'].iloc[-1]
+    predicted_next_week = last_week_sales * 1.10
+    st.success(f"🔮 Predicted Next Week Revenue: ₹ {predicted_next_week:,.0f}"
+               )
 
 # ---------------- ANALYTICS PAGE ----------------
 elif page == "Analytics":
@@ -508,32 +560,125 @@ elif page == "Analytics":
 elif page == "ML Prediction":
 
     st.subheader("🔮 Predict Grocery Sales")
-    st.write("Enter values below to predict sales.")
 
-    target_col = "Sales"
+    st.write("Enter product details below.")
 
-    # Features used for training
-    X = df.drop(columns=[target_col])
-    feature_cols = X.columns
+    col1, col2 = st.columns(2)
 
-    input_data = []
+    # ---------- COLUMN 1 ----------
+    with col1:
 
-    cols = st.columns(3)
-
-    for i, col in enumerate(feature_cols):
-
-        value = cols[i % 3].number_input(
-            f"Enter {col}",
-             value = float(df[col].mean()) if pd.api.types.is_numeric_dtype(df[col]) else 0
+        item_weight = st.number_input(
+            "Item Weight",
+            min_value=0.0,
+            value=12.0
         )
 
-        input_data.append(value)
+        item_visibility = st.number_input(
+            "Item Visibility",
+            min_value=0.0,
+            value=0.05
+        )
 
-    if st.button("Predict Sales"):
+        item_mrp = st.number_input(
+            "Item MRP",
+            min_value=0.0,
+            value=150.0
+        )
 
-        prediction = model.predict([input_data])
+        outlet_age = st.number_input(
+            "Outlet Age",
+            min_value=1,
+            value=10
+        )
 
-        st.success(f"Predicted Sales: ₹ {prediction[0]:,.2f}")
+    # ---------- COLUMN 2 ----------
+    with col2:
+
+        item_fat = st.selectbox(
+            "Item Fat Content",
+            ["Low Fat", "Regular"]
+        )
+
+        outlet_size = st.selectbox(
+            "Outlet Size",
+            ["Small", "Medium", "High"]
+        )
+
+        outlet_location = st.selectbox(
+            "Outlet Location Type",
+            ["Tier 1", "Tier 2", "Tier 3"]
+        )
+
+        outlet_type = st.selectbox(
+            "Outlet Type",
+            [
+                "Supermarket Type1",
+                "Supermarket Type2",
+                "Supermarket Type3",
+                "Grocery Store"
+            ]
+        )
+
+    # ---------- ENCODING ----------
+    item_fat_encoded = 0 if item_fat == "Low Fat" else 1
+
+    outlet_size_map = {
+        "Small": 0,
+        "Medium": 1,
+        "High": 2
+    }
+
+    outlet_location_map = {
+        "Tier 1": 0,
+        "Tier 2": 1,
+        "Tier 3": 2
+    }
+
+    outlet_type_map = {
+        "Grocery Store": 0,
+        "Supermarket Type1": 1,
+        "Supermarket Type2": 2,
+        "Supermarket Type3": 3
+    }
+
+    outlet_size_encoded = outlet_size_map[outlet_size]
+    outlet_location_encoded = outlet_location_map[outlet_location]
+    outlet_type_encoded = outlet_type_map[outlet_type]
+
+    # Dummy encoded values
+    item_type_encoded = 5
+    item_identifier_encoded = 100
+    outlet_identifier_encoded = 10
+
+    # ---------- PREDICTION ----------
+    if st.button("🚀 Predict Sales"):
+
+        try:
+
+            input_data = [
+                item_weight,
+                item_visibility,
+                item_mrp,
+                outlet_age,
+                item_fat_encoded,
+                item_type_encoded,
+                outlet_size_encoded,
+                outlet_location_encoded,
+                outlet_type_encoded,
+                item_identifier_encoded,
+                outlet_identifier_encoded
+            ]
+
+            prediction = model.predict([input_data])
+
+            st.success(
+                f"🛒 Predicted Sales: ₹ {prediction[0]:,.2f}"
+            )
+
+        except Exception as e:
+
+            st.error(f"❌ Error: {e}")
 
 # ---------------- DATASET PAGE ----------------
 elif page == "Dataset":
