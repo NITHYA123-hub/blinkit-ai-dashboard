@@ -156,7 +156,7 @@ try:
     with open(MODEL_PATH, "rb") as f:
         model = pickle.load(f)
 
-     st.success("✅ ML Model Loaded Successfully")
+     # st.success("✅ ML Model Loaded Successfully")
 
 except FileNotFoundError:
     st.error(f"❌ Model file not found:\n{MODEL_PATH}")
