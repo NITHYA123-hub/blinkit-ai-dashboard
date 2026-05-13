@@ -2,6 +2,14 @@
 
 AI Powered Grocery Sales Intelligence System using Machine Learning and Streamlit.
 
+## Admin Login
+username : admin
+password : blinkit123
+
+## Guest Login
+username : guest
+password : guest123
+
 ## 🚀 Live Demo
 Try the app here 👉 
 https://blinkit-ai-dashboard.streamlit.app
